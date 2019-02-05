@@ -36,12 +36,38 @@ import collections
 import re
 
 
-#---------------------------
+# ---------------------------
 # Define Input Files
-#---------------------------
+# ---------------------------
 
-datadirectory = "./"
+datadirectory = "./data/"
+list_of_files = os.listdir("./data/")
+topology_file = datadirectory+"topology.txt"
 
+
+# ---------------------------
+# Define MC sampling Parameters
+# ---------------------------
+
+num_frames = 10000
+if '--test' in sys.argv: num_frames=20
+num_mc_steps = 10
+
+
+# --------------------------
+# Create movers
+# --------------------------
+# rigid body movement params
+rb_max_trans = 1.00
+rb_max_rot = 0.01
+# flexible bead movement
+bead_max_trans = 2.00
+
+# --------------------------------
+# Build the Model Representation
+# --------------------------------
+# Initialize model
+m = IMP.Model()
 
 
 # Input sequences
