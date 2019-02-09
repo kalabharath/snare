@@ -87,12 +87,13 @@ for n in range(len(components)):
 
             atomic = mol.add_structure("/netapp/sali/ilan/Exocyst/data/%s" % structure_file,  chain_id=chains[n], offset=offset)
             #print mol, list(atomic)[0], list(atomic)[-1]
-            mol.add_representation(atomic, 
-                                   resolutions=[1,10], 
-                                   color=colors[n], 
+            mol.add_representation(atomic,
+                                   resolutions=[1, 10],
+                                   color=colors[n],
                                    density_residues_per_component=10,
-                                   density_prefix="/netapp/sali/ilan/Exocyst/data/gmm_structural_parts/"+structure_file[0:-4], 
-                                   density_force_compute=False, 
+                                   density_prefix="/netapp/sali/ilan/Exocyst/data/gmm_structural_parts/" + structure_file[
+                                                                                                           0:-4],
+                                   density_force_compute=False,
                                    density_voxel_size=4.0)
 
     mols.append(mol)

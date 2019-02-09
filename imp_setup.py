@@ -85,12 +85,8 @@ subs = []
 s = IMP.pmi.topology.System(m)
 st = s.create_state()
 
-
-
 # Setup sequences and chain ids
-
 offset = 0
-
 
 for n in range(0, len(components)):
     seqs = IMP.pmi.topology.Sequences(cwd+"/data/%s.fasta" %components[n])
@@ -100,17 +96,20 @@ for n in range(0, len(components)):
         if (pdb.startswith(components[n])) and pdb.endswith(".pdb"):
             print pdb, 'wtf'
             atomic = mol.add_structure(cwd+'/data/%s' %pdb, chain_id = chains[n], offset= offset)
-
+            mol.add_representation(atomic,
+                                   resolutions=[1, 10],
+                                   color=colors[n],
+                                   density_residues_per_component=10,
+                                   density_prefix="/netapp/sali/ilan/Exocyst/data/gmm_structural_parts/" + structure_file[0:-4],
+                                   density_force_compute=False,
+                                   density_voxel_size=4.0)
 
 """
-
-
 # Input sequences
 spots_seq_file = '/wynton/scratch/rakesh/SPOTSModeling/spotsJobLarge/data/spots.fasta'
 spots_seqs = IMP.pmi.topology.Sequences(spots_seq_file)
 spots_components={"LCB1":["A","F"],"LCB2":["B","G"],"ORM1":["C","H"],"ORM2":["D","I"],"TSC3":["E","J"]}
 spots_colors ={"LCB1":["blue","cyan"],"LCB2":["red","salmon"],"ORM1":["green","gold"],"ORM2":["pink","orange"],"TSC3":["brown","black"]}
-
 
 # input files
 allcrosslink_file = "/wynton/scratch/rakesh/SPOTSModeling/spotsJobLarge/data/crossLinks/allCrossLinks.csv"
@@ -124,6 +123,5 @@ RB_MAX_ROT = 1.0
 FLEX_MAX_TRANS = 4.0
 SRB_MAX_TRANS = 1.0
 SRB_MAX_ROT = 0.1
-
 
 """
