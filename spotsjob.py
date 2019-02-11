@@ -60,14 +60,6 @@ def add_spots_rep(mol, chain, unstructured_bead_size, clr, prot, dens):
 
         mol.add_representation(mol[:] - atomic, resolutions=[unstructured_bead_size], color=clr, setup_particles_as_densities=True, density_force_compute=False)
 
-    # if prot=='LCB2':
-
-    #   atomic = mol.add_structure('/wynton/scratch/rakesh/SPOTSModeling/spotsJobLarge/data/structures/LCB2.pdb', chain_id=chain, offset=0)
-
-    #   mol.add_representation(atomic, resolutions=[1,10], color = clr, density_prefix='/wynton/scratch/rakesh/SPOTSModeling/spotsJobLarge/data/em_data/'+ prot +'.'+ chain, density_residues_per_component=dens, density_force_compute=False)
-
-    #   mol.add_representation(mol[:] - atomic, resolutions=[unstructured_bead_size], color=clr, setup_particles_as_densities=True, density_force_compute=False)
-
     if prot=='ORM1':
 
         atomic = mol.add_structure('/wynton/scratch/rakesh/SPOTSModeling/spotsJobLarge/data/structures/'+ prot +".pdb", chain_id=chain, offset=0)

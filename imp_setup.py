@@ -41,6 +41,7 @@ import sys, os, glob
 datadirectory = "./data/"
 list_of_files = os.listdir("./data/")
 topology_file = datadirectory+"topology.txt"
+all_cg_bead_size = 10
 cwd = os.getcwd()
 print cwd
 # ---------------------------
@@ -75,8 +76,7 @@ colors = ['green', 'turquoise', 'pink', 'yellow', 'red']
 components = ['Vamp2', 'Stx1a', 'Snap25', 'Cplx2', 'Syt7']
 chains = 'ABCDE'
 
-seqs = {}
-mols = {}
+mols = []
 subs = []
 
 
@@ -88,40 +88,55 @@ st = s.create_state()
 # Setup sequences and chain ids
 offset = 0
 
+print components
+
 for n in range(0, len(components)):
     seqs = IMP.pmi.topology.Sequences(cwd+"/data/%s.fasta" %components[n])
     mol = st.create_molecule(components[n], sequence = seqs['%s' %components[n]], chain_id = chains[n])
 
     for pdb in list_of_files:
         if (pdb.startswith(components[n])) and pdb.endswith(".pdb"):
-            print pdb, 'wtf'
-            atomic = mol.add_structure(cwd+'/data/%s' %pdb, chain_id = chains[n], offset= offset)
-            mol.add_representation(atomic,
-                                   resolutions=[1, 10],
-                                   color=colors[n],
-                                   density_residues_per_component=10,
-                                   density_prefix="/netapp/sali/ilan/Exocyst/data/gmm_structural_parts/" + structure_file[0:-4],
-                                   density_force_compute=False,
-                                   density_voxel_size=4.0)
+            atomic = mol.add_structure(cwd + '/data/%s' % pdb, chain_id=chains[n], offset=offset)
+            mol.add_representation(atomic, resolutions=[1, 10], color=colors[n], bead_ca_centers=True)
 
-"""
-# Input sequences
-spots_seq_file = '/wynton/scratch/rakesh/SPOTSModeling/spotsJobLarge/data/spots.fasta'
-spots_seqs = IMP.pmi.topology.Sequences(spots_seq_file)
-spots_components={"LCB1":["A","F"],"LCB2":["B","G"],"ORM1":["C","H"],"ORM2":["D","I"],"TSC3":["E","J"]}
-spots_colors ={"LCB1":["blue","cyan"],"LCB2":["red","salmon"],"ORM1":["green","gold"],"ORM2":["pink","orange"],"TSC3":["brown","black"]}
+    mols.append(mol)
 
-# input files
-allcrosslink_file = "/wynton/scratch/rakesh/SPOTSModeling/spotsJobLarge/data/crossLinks/allCrossLinks.csv"
+for mol in mols:
 
-# Parameters to tweak for production run
-all_cg_bead_size = 10
+    mol.add_representation(mol[:]-mol.get_atomic_residues(), resolutions = [all_cg_bead_size], color = colors[mols.index(mol)])
 
-# MC parameters
-RB_MAX_TRANS = 4.0
-RB_MAX_ROT = 1.0
-FLEX_MAX_TRANS = 4.0
-SRB_MAX_TRANS = 1.0
-SRB_MAX_ROT = 0.1
 
-"""
+# calling System.build() creates all States and Molecules (and their representations)
+# Once you call build(), anything without representation is destroyed.
+representation = s.build()
+
+# For verbose output of the representation
+IMP.atom.show_with_representations(representation)
+
+
+# --------------------------
+# Define Degrees of Freedom
+# --------------------------
+# The DOF functions automatically select all resolutions
+# Objects passed to nonrigid_parts move with the frame but also have their own independent movers.
+# Each structured unit is a single rigid body, with flexible beads corresponding to missing regions
+
+dof = IMP.pmi.dof.DegreesOfFreedom(m)
+
+for mol in mols:
+
+    selm = mol[:] - mol.get_atomic_residues()
+    dof.create_flexible_beads(selm, max_trans=bead_max_trans)
+
+    for structure_file in list_of_files:
+        if structure_file.endswith(".pdb"):
+            name = structure_file.strip("\n").split(".")[0].split("_")
+            if name[0] in mol.get_name():
+                print mol, name[0], name[1], name[2]
+                sel0 = mol.residue_range(name[1], name[2])
+                dof.create_rigid_body(sel0,
+                                      max_trans=rb_max_trans,
+                                      max_rot=rb_max_rot,
+                                      nonrigid_max_trans=bead_max_trans)
+
+    # dof.create_super_rigid_body(mol)

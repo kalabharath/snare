@@ -154,19 +154,17 @@ for mol in mols:
     print "###ILAN###"
     print mol.get_name()
 
-
-    selm = mol[:]-mol.get_atomic_residues()-helices
+    selm = mol[:] - mol.get_atomic_residues() - helices
     dof.create_flexible_beads(selm,
                               max_trans=bead_max_trans)
 
-
     for structure_file in list_of_files:
         if structure_file.endswith(".pdb"):
-            name=structure_file.strip("\n").split(".")[0].split("_")
+            name = structure_file.strip("\n").split(".")[0].split("_")
             if name[0] in mol.get_name():
                 print mol, name[0], name[1], name[2]
                 sel0 = mol.residue_range(name[1], name[2])
-                dof.create_rigid_body(sel0, 
+                dof.create_rigid_body(sel0,
                                       max_trans=rb_max_trans,
                                       max_rot=rb_max_rot,
                                       nonrigid_max_trans=bead_max_trans)
