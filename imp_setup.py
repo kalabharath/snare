@@ -28,11 +28,10 @@ import IMP.core
 # Import standard Python modules
 import numpy as np
 from math import log, pi, sqrt, exp
-import math,csv
+import math, csv
 import collections
 import re
 import sys, os, glob
-
 
 # ---------------------------
 # Define Input Files
@@ -40,18 +39,17 @@ import sys, os, glob
 
 datadirectory = "./data/"
 list_of_files = os.listdir("./data/")
-topology_file = datadirectory+"topology.txt"
 all_cg_bead_size = 10
 cwd = os.getcwd()
 print cwd
+
 # ---------------------------
 # Define MC sampling Parameters
 # ---------------------------
 
 num_frames = 10000
-if '--test' in sys.argv: num_frames=20
+if '--test' in sys.argv: num_frames = 20
 num_mc_steps = 10
-
 
 # --------------------------
 # Create movers
@@ -68,7 +66,6 @@ bead_max_trans = 2.00
 # Initialize model
 m = IMP.Model()
 
-
 # create list of components from topology file
 
 beadsize = 10
@@ -78,7 +75,6 @@ chains = 'ABCDE'
 
 mols = []
 subs = []
-
 
 # Create system and state
 
@@ -91,8 +87,8 @@ offset = 0
 print components
 
 for n in range(0, len(components)):
-    seqs = IMP.pmi.topology.Sequences(cwd+"/data/%s.fasta" %components[n])
-    mol = st.create_molecule(components[n], sequence = seqs['%s' %components[n]], chain_id = chains[n])
+    seqs = IMP.pmi.topology.Sequences(cwd + "/data/%s.fasta" % components[n])
+    mol = st.create_molecule(components[n], sequence=seqs['%s' % components[n]], chain_id=chains[n])
 
     for pdb in list_of_files:
         if (pdb.startswith(components[n])) and pdb.endswith(".pdb"):
@@ -102,9 +98,8 @@ for n in range(0, len(components)):
     mols.append(mol)
 
 for mol in mols:
-
-    mol.add_representation(mol[:]-mol.get_atomic_residues(), resolutions = [all_cg_bead_size], color = colors[mols.index(mol)])
-
+    mol.add_representation(mol[:] - mol.get_atomic_residues(), resolutions=[all_cg_bead_size],
+                           color=colors[mols.index(mol)])
 
 # calling System.build() creates all States and Molecules (and their representations)
 # Once you call build(), anything without representation is destroyed.
@@ -112,7 +107,6 @@ representation = s.build()
 
 # For verbose output of the representation
 IMP.atom.show_with_representations(representation)
-
 
 # --------------------------
 # Define Degrees of Freedom
@@ -140,3 +134,81 @@ for mol in mols:
                                       nonrigid_max_trans=bead_max_trans)
 
     # dof.create_super_rigid_body(mol)
+
+# --------------------------
+# Define Restraints
+# --------------------------
+
+# Here we are defining a number of restraints on our system.
+# For all of them we call add_to_model() so they are incorporated into scoring
+# We also add them to the outputobjects list, so they are reported in stat files
+
+# Add default mover parameters to simulation
+outputobjects = []  # reporter objects (for stat files)
+sampleobjects = []  # sampling objects
+
+# Excluded Volume Restraint
+# To speed up this expensive restraint, we operate it at resolution 20
+
+sf = IMP.core.RestraintsScoringFunction(IMP.pmi.tools.get_restraint_set(m))
+sf.evaluate(False)
+
+snares = []
+
+for mol in mols:
+    cr = IMP.pmi.restraints.stereochemistry.ConnectivityRestraint(mol, scale=2.0)
+    cr.add_to_model()
+    outputobjects.append(cr)
+    sampleobjects.append(cr)
+    snares.append(mol)
+
+print (snares)
+
+sf = IMP.core.RestraintsScoringFunction(IMP.pmi.tools.get_restraint_set(m))
+# print "ilan2",sf.evaluate(False)
+
+# --------------------------
+# Crosslinks - datasets
+# --------------------------
+#
+# To use this restraint we have to first define the data format
+# Here assuming that it's a CSV file with column names that may need to change
+# Other options include the linker length and the slope (for nudging components together)
+kw = IMP.pmi.io.crosslink.CrossLinkDataBaseKeywordsConverter()
+kw.set_unique_id_key("id")
+kw.set_protein1_key("protein1")
+kw.set_protein2_key("protein2")
+kw.set_residue1_key("residue1")
+kw.set_residue2_key("residue2")
+kw.set_id_score_key(None)
+xldb_exo = IMP.pmi.io.crosslink.CrossLinkDataBase(kw)
+
+csv_files = glob.glob(cwd + "/data/*.csv")
+print csv_files
+
+for csv_file in csv_files:
+    tlength = csv_file.split("/")
+    tlength = tlength[-1].rstrip(".csv")
+    tlength = int(tlength.lstrip("xl_"))
+    print "the length of :", csv_file, tlength
+    xldb_exo.create_set_from_file(csv_file)
+    xls = IMP.pmi.restraints.crosslinking.CrossLinkingMassSpectrometryRestraint(root_hier=representation,
+                                                                            CrossLinkDataBase=xldb_exo,
+                                                                            length=tlength,
+                                                                            label="XLS",
+                                                                            resolution=1.0,
+                                                                            slope=0.02)
+
+    xls.rs.set_weight(25.0)
+    xls.add_to_model()
+    sampleobjects.append(xls)
+    outputobjects.append(xls)
+    dof.get_nuisances_from_restraint(xls)
+    sf = IMP.core.RestraintsScoringFunction(IMP.pmi.tools.get_restraint_set(m))
+    sf.evaluate(False)
+
+sf = IMP.core.RestraintsScoringFunction(IMP.pmi.tools.get_restraint_set(m))
+sf.evaluate(False)
+
+IMP.pmi.tools.shuffle_configuration(representation)
+dof.optimize_flexible_beads(200)

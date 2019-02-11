@@ -200,7 +200,7 @@ for mol in mols:
       cr.add_to_model()
       outputobjects.append(cr)
       sampleobjects.append(cr)
-      crs.append(cr)      
+      crs.append(cr)
       EXO.append(mol)
 
 print(EXO)
