@@ -33,7 +33,7 @@ import sys, os, glob
 
 datadirectory = "./data/"
 list_of_files = os.listdir("./data/")
-all_cg_bead_size = 10
+all_cg_bead_size = 5
 cwd = os.getcwd()
 print cwd
 
@@ -94,6 +94,7 @@ for n in range(0, len(components)):
 for mol in mols:
     mol.add_representation(mol[:] - mol.get_atomic_residues(), resolutions=[all_cg_bead_size],
                            color=colors[mols.index(mol)])
+
 
 # calling System.build() creates all States and Molecules (and their representations)
 # Once you call build(), anything without representation is destroyed.
@@ -162,11 +163,11 @@ sf = IMP.core.RestraintsScoringFunction(IMP.pmi.tools.get_restraint_set(m))
 ###############################
 # Membrane Restraint
 inside = [(266, 288, 'Stx1a')]
-above = [(1, 265, 'Stx1a')]
+above  = [(1, 116, 'Vamp2'), (1, 265, 'Stx1a'), (1, 206, 'Snap25'), (1, 134, 'Cplx2'), (1, 203, 'Syt7')]
 mr = IMP.pmi.restraints.basic.MembraneRestraint(representation, objects_inside=inside, objects_above=above,
                                                 thickness=40)
 mr.add_to_model()
-mr.create_membrane_density(file_out = "membrane.mrc")
+mr.create_membrane_density(file_out=cwd+"/membrane.mrc")
 outputobjects.append(mr)
 dof.get_nuisances_from_restraint(mr)
 
@@ -191,26 +192,34 @@ kw.set_residue1_key("residue1")
 kw.set_residue2_key("residue2")
 kw.set_id_score_key(None)
 
+xls_objs = []
+
 for csv_file in csv_files:
+    xldb_exo = IMP.pmi.io.crosslink.CrossLinkDataBase(kw)
+    xls_objs.append(xldb_exo)
+
+for xldb in xls_objs:
+    csv_file = csv_files[xls_objs.index(xldb)]
+    print "Extracting restraints from this file:", csv_file
+    xldb.create_set_from_file(csv_file)
     tlength = csv_file.split("/")
     tlength = tlength[-1].rstrip(".csv")
     tlength = int(tlength.lstrip("xl_"))
     print "the length of :", csv_file, tlength
 
-    xldb_exo = IMP.pmi.io.crosslink.CrossLinkDataBase(kw)
-    xldb_exo.create_set_from_file(csv_file)
     xls = IMP.pmi.restraints.crosslinking.CrossLinkingMassSpectrometryRestraint(root_hier=representation,
-                                                                                CrossLinkDataBase=xldb_exo,
+                                                                                CrossLinkDataBase=xldb,
                                                                                 length=tlength,
                                                                                 label="XLS_" + str(tlength),
                                                                                 resolution=1.0,
                                                                                 slope=0.02)
-
-    xls.rs.set_weight(25.0)
+    xls.rs.set_weight(1.0)
     xls.add_to_model()
     sampleobjects.append(xls)
     outputobjects.append(xls)
     dof.get_nuisances_from_restraint(xls)
+
+print sampleobjects
 
 
 sf = IMP.core.RestraintsScoringFunction(IMP.pmi.tools.get_restraint_set(m))
@@ -251,7 +260,7 @@ mc0 = IMP.pmi.macros.ReplicaExchange0(m,
                                       simulated_annealing_maximum_temperature_nframes=20,
 
                                       replica_exchange_minimum_temperature=1.0,
-                                      replica_exchange_maximum_temperature=2.5,
+                                      replica_exchange_maximum_temperature=5.0,
 
                                       monte_carlo_steps=num_mc_steps,
                                       number_of_frames=20000,
