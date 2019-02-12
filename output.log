@@ -854,7 +854,6 @@ Adding sequence connectivity restraint between 238-247_bead  and  248-257_bead o
 Adding sequence connectivity restraint between 248-257_bead  and  258-262_bead of distance 7.2
 Adding sequence connectivity restraint between 258-262_bead  and  Residue_263 of distance 7.2
 [System.State_0.Vamp2.0, System.State_0.Stx1a.0, System.State_0.Snap25.0, System.State_0.Cplx2.0, System.State_0.Syt7.0]
-ilan2 1775.42233393
 ['/home/kalabharath/projects/snare_isg_imp/snare/data/xl_15.csv', '/home/kalabharath/projects/snare_isg_imp/snare/data/xl_25.csv', '/home/kalabharath/projects/snare_isg_imp/snare/data/xl_30.csv', '/home/kalabharath/projects/snare_isg_imp/snare/data/xl_20.csv']
 the length of : /home/kalabharath/projects/snare_isg_imp/snare/data/xl_15.csv 15
 gathering copies
@@ -1300,7 +1299,7 @@ CrossLinkingMassSpectrometryRestraint: with sigma1 SIGMA sigma2 SIGMA psi PSI
 CrossLinkingMassSpectrometryRestraint: between particles Residue_51 and Residue_212
 ==========================================
 
-ilan3 2896.8794434
+WARNING  Object "RestraintsScoringFunction1" was never used. See the IMP::Object documentation for an explanation.
 the length of : /home/kalabharath/projects/snare_isg_imp/snare/data/xl_25.csv 25
 gathering copies
 defaultdict(<type 'int'>, {'Stx1a': 0, 'Snap25': 0, 'Vamp2': 0, 'Cplx2': 0, 'Syt7': 0})
@@ -2473,7 +2472,6 @@ CrossLinkingMassSpectrometryRestraint: with sigma1 SIGMA sigma2 SIGMA psi PSI
 CrossLinkingMassSpectrometryRestraint: between particles Residue_71 and Residue_45
 ==========================================
 
-ilan3 6426.8261391
 the length of : /home/kalabharath/projects/snare_isg_imp/snare/data/xl_30.csv 30
 gathering copies
 defaultdict(<type 'int'>, {'Stx1a': 0, 'Snap25': 0, 'Vamp2': 0, 'Cplx2': 0, 'Syt7': 0})
@@ -3854,7 +3852,6 @@ CrossLinkingMassSpectrometryRestraint: with sigma1 SIGMA sigma2 SIGMA psi PSI
 CrossLinkingMassSpectrometryRestraint: between particles Residue_72 and Residue_61
 ==========================================
 
-ilan3 10621.4969615
 the length of : /home/kalabharath/projects/snare_isg_imp/snare/data/xl_20.csv 20
 gathering copies
 defaultdict(<type 'int'>, {'Cplx2': 0, 'Snap25': 0, 'Vamp2': 0, 'Stx1a': 0, 'Syt7': 0})
@@ -4603,5 +4600,7 @@ CrossLinkingMassSpectrometryRestraint: with sigma1 SIGMA sigma2 SIGMA psi PSI
 CrossLinkingMassSpectrometryRestraint: between particles Residue_189 and Residue_154
 ==========================================
 
-ilan3 12803.5718755
-ilan4 12803.5718755
+shuffling 8 rigid bodies
+shuffling 61 flexible beads
+optimize_flexible_beads: optimizing 61 flexible beads
+ilan1 23448128.3609

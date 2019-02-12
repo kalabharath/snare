@@ -1,5 +1,5 @@
 protein1,residue1,protein2,residue2,id,p value
-Syt7,279,Stx1a,66,56,1.0
+    Syt7,279,        Stx1a,      66,56,1.0
 Syt7,279,Stx1a,156,57,1.0
 Vamp2,36,Stx1a,194,58,1.0
 Vamp2,40,Stx1a,197,59,1.0

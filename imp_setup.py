@@ -22,15 +22,9 @@ import IMP.pmi.io.crosslink
 import IMP.pmi.restraints.crosslinking
 import IMP.algebra
 import IMP.pmi.analysis
+import IMP.mpi
 
 import IMP.core
-
-# Import standard Python modules
-import numpy as np
-from math import log, pi, sqrt, exp
-import math, csv
-import collections
-import re
 import sys, os, glob
 
 # ---------------------------
@@ -151,7 +145,6 @@ sampleobjects = []  # sampling objects
 # To speed up this expensive restraint, we operate it at resolution 20
 
 sf = IMP.core.RestraintsScoringFunction(IMP.pmi.tools.get_restraint_set(m))
-sf.evaluate(False)
 
 snares = []
 
@@ -165,15 +158,31 @@ for mol in mols:
 print (snares)
 
 sf = IMP.core.RestraintsScoringFunction(IMP.pmi.tools.get_restraint_set(m))
-# print "ilan2",sf.evaluate(False)
+
+###############################
+# Membrane Restraint
+inside = [(266, 288, 'Stx1a')]
+above = [(1, 265, 'Stx1a')]
+mr = IMP.pmi.restraints.basic.MembraneRestraint(representation, objects_inside=inside, objects_above=above,
+                                                thickness=40)
+mr.add_to_model()
+mr.create_membrane_density(file_out = "membrane.mrc")
+outputobjects.append(mr)
+dof.get_nuisances_from_restraint(mr)
+
+###############################
 
 # --------------------------
 # Crosslinks - datasets
 # --------------------------
-#
 # To use this restraint we have to first define the data format
 # Here assuming that it's a CSV file with column names that may need to change
 # Other options include the linker length and the slope (for nudging components together)
+
+
+csv_files = glob.glob(cwd + "/data/*.csv")
+print csv_files
+
 kw = IMP.pmi.io.crosslink.CrossLinkDataBaseKeywordsConverter()
 kw.set_unique_id_key("id")
 kw.set_protein1_key("protein1")
@@ -181,34 +190,73 @@ kw.set_protein2_key("protein2")
 kw.set_residue1_key("residue1")
 kw.set_residue2_key("residue2")
 kw.set_id_score_key(None)
-xldb_exo = IMP.pmi.io.crosslink.CrossLinkDataBase(kw)
-
-csv_files = glob.glob(cwd + "/data/*.csv")
-print csv_files
 
 for csv_file in csv_files:
     tlength = csv_file.split("/")
     tlength = tlength[-1].rstrip(".csv")
     tlength = int(tlength.lstrip("xl_"))
     print "the length of :", csv_file, tlength
+
+    xldb_exo = IMP.pmi.io.crosslink.CrossLinkDataBase(kw)
     xldb_exo.create_set_from_file(csv_file)
     xls = IMP.pmi.restraints.crosslinking.CrossLinkingMassSpectrometryRestraint(root_hier=representation,
-                                                                            CrossLinkDataBase=xldb_exo,
-                                                                            length=tlength,
-                                                                            label="XLS",
-                                                                            resolution=1.0,
-                                                                            slope=0.02)
+                                                                                CrossLinkDataBase=xldb_exo,
+                                                                                length=tlength,
+                                                                                label="XLS_" + str(tlength),
+                                                                                resolution=1.0,
+                                                                                slope=0.02)
 
     xls.rs.set_weight(25.0)
     xls.add_to_model()
     sampleobjects.append(xls)
     outputobjects.append(xls)
     dof.get_nuisances_from_restraint(xls)
-    sf = IMP.core.RestraintsScoringFunction(IMP.pmi.tools.get_restraint_set(m))
-    sf.evaluate(False)
+
 
 sf = IMP.core.RestraintsScoringFunction(IMP.pmi.tools.get_restraint_set(m))
 sf.evaluate(False)
 
 IMP.pmi.tools.shuffle_configuration(representation)
 dof.optimize_flexible_beads(200)
+
+# --------------------------
+# Excluded Volume
+# --------------------------
+# This object defines all components to be sampled as well as the sampling protocol
+
+ev1 = IMP.pmi.restraints.stereochemistry.ExcludedVolumeSphere(included_objects=mols,
+                                                              resolution=10)
+ev1.add_to_model()
+ev1.set_label('Snare')
+outputobjects.append(ev1)
+
+sf = IMP.core.RestraintsScoringFunction(IMP.pmi.tools.get_restraint_set(m))
+
+# --------------------------
+# Monte-Carlo Sampling
+# --------------------------
+# This object defines all components to be sampled as well as the sampling protocol
+
+mc0 = IMP.pmi.macros.ReplicaExchange0(m,
+                                      root_hier=representation,
+                                      monte_carlo_sample_objects=dof.get_movers(),
+                                      output_objects=outputobjects,
+                                      crosslink_restraints=sampleobjects,
+                                      monte_carlo_temperature=1.0,
+
+                                      simulated_annealing=True,
+                                      simulated_annealing_minimum_temperature=1.0,
+                                      simulated_annealing_maximum_temperature=1.5,
+                                      simulated_annealing_minimum_temperature_nframes=200,
+                                      simulated_annealing_maximum_temperature_nframes=20,
+
+                                      replica_exchange_minimum_temperature=1.0,
+                                      replica_exchange_maximum_temperature=2.5,
+
+                                      monte_carlo_steps=num_mc_steps,
+                                      number_of_frames=20000,
+                                      global_output_directory='output/')
+
+mc0.execute_macro()
+
+rex0 = mc0.get_replica_exchange_object()
