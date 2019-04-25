@@ -34,37 +34,37 @@ def parse_CAs(pdb_file):
     #print ca_array
     return ca_array
 
-pdb_files = glob.glob("*_2.pdb")
+pdb_files = glob.glob("*.pdb")
 
-count = 0
+print pdb_files
 pvalue = 1.0
-cutoffs = [ 15, 20, 25, 30]
+cutoffs = [ 5, 10, 15, 20, 25, 30]
 delta = 0.15
 for cutoff in cutoffs:
+    count = 0
     print 'cutoff', cutoff
     xls = []
-    for i in range(len(pdb_files)-1):
+    for i in range(0,len(pdb_files)-1):
         pdb1 = pdb_files[i]
-        pdb2 = pdb_files[i+1]
-        print pdb1, pdb2
-        pdb1_ca = parse_CAs(pdb1)
-        pdb2_ca = parse_CAs(pdb2)
-        pdb1_resi = pdb1_ca.keys()
-        pdb2_resi = pdb2_ca.keys()
+        for j in range(i+1, len(pdb_files)):
+            pdb2 = pdb_files[j]
+            print pdb1, pdb2
+            pdb1_ca = parse_CAs(pdb1)
+            pdb2_ca = parse_CAs(pdb2)
+            pdb1_resi = pdb1_ca.keys()
+            pdb2_resi = pdb2_ca.keys()
 
-        for resi1 in pdb1_resi:
-            coor1 = pdb1_ca[resi1]
-            for resi2 in pdb2_resi:
-                coor2 = pdb2_ca[resi2]
-                dist = get_dist(coor1, coor2)
-                tpdb1 = pdb1.split("_")
-                tpdb2 = pdb2.split("_")
-                if tpdb1[0] == 'Vamp2' or tpdb2[0]== 'Vamp2' :
-                    #print tpdb1, tpdb2, dist, '**********'
-                    pass
-                if (cutoff-delta) <= dist < (cutoff+delta):
-                    count +=1
-                    print tpdb1[0], resi1, tpdb2[0], resi2, count, pvalue
-                    xls.append([tpdb1[0], resi1, tpdb2[0], resi2, count, pvalue])
+            for resi1 in pdb1_resi:
+                coor1 = pdb1_ca[resi1]
+                for resi2 in pdb2_resi:
+                    coor2 = pdb2_ca[resi2]
+                    dist = get_dist(coor1, coor2)
+                    tpdb1 = pdb1.split("_")
+                    tpdb2 = pdb2.split("_")
+                    if (cutoff-delta) <= dist < (cutoff+delta):
+                        count +=1
+                        print tpdb1[0], resi1, tpdb2[0], resi2, count, pvalue
+                        xls.append([tpdb1[0], resi1, tpdb2[0], resi2, count, pvalue])
+                        #print xls
 
     write_csv('xl_'+str(cutoff)+".csv",xls)

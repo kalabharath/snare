@@ -16,7 +16,7 @@ import IMP.pmi.dof
 import IMP.pmi.macros
 import IMP.pmi.restraints
 import IMP.pmi.restraints.stereochemistry
-import IMP.pmi.restraints.basic
+from vesicle_restraint import VesicleMembraneRestraint
 import IMP.pmi.restraints.proteomics
 import IMP.pmi.io.crosslink
 import IMP.pmi.restraints.crosslinking
@@ -62,10 +62,18 @@ m = IMP.Model()
 
 # create list of components from topology file
 
-beadsize = 10
+
+"""
 colors = ['green', 'turquoise', 'pink', 'yellow', 'red']
 components = ['Vamp2', 'Stx1a', 'Snap25', 'Cplx2', 'Syt7']
 chains = 'ABCDE'
+colors = ['green', 'turquoise', 'pink', 'yellow']
+"""
+
+
+colors = ['green', 'turquoise', 'magenta', 'orange']
+components = ['Vamp2', 'Stx1a', 'Snap25', 'Cplx2']
+chains = 'ABCD'
 
 mols = []
 subs = []
@@ -87,7 +95,7 @@ for n in range(0, len(components)):
     for pdb in list_of_files:
         if (pdb.startswith(components[n])) and pdb.endswith(".pdb"):
             atomic = mol.add_structure(cwd + '/data/%s' % pdb, chain_id=chains[n], offset=offset)
-            mol.add_representation(atomic, resolutions=[1, 10], color=colors[n], bead_ca_centers=True)
+            mol.add_representation(atomic, resolutions=[1, 5], color=colors[n], bead_ca_centers=True)
 
     mols.append(mol)
 
@@ -162,9 +170,10 @@ sf = IMP.core.RestraintsScoringFunction(IMP.pmi.tools.get_restraint_set(m))
 
 ###############################
 # Membrane Restraint
-inside = [(266, 288, 'Stx1a')]
-above  = [(1, 116, 'Vamp2'), (1, 265, 'Stx1a'), (1, 206, 'Snap25'), (1, 134, 'Cplx2'), (1, 203, 'Syt7')]
-mr = IMP.pmi.restraints.basic.MembraneRestraint(representation, objects_inside=inside, objects_above=above,
+
+inside = [(266, 288, 'Stx1a'), (95, 116, 'Vamp2')]
+above  = [(1, 94, 'Vamp2'), (1, 265, 'Stx1a'), (1, 206, 'Snap25')]
+mr = VesicleMembraneRestraint(representation, objects_inside=inside, objects_above=above,
                                                 thickness=40)
 mr.add_to_model()
 mr.create_membrane_density(file_out=cwd+"/membrane.mrc")
@@ -220,7 +229,6 @@ for xldb in xls_objs:
     dof.get_nuisances_from_restraint(xls)
 
 print sampleobjects
-
 
 sf = IMP.core.RestraintsScoringFunction(IMP.pmi.tools.get_restraint_set(m))
 sf.evaluate(False)

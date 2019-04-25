@@ -1,0 +1,5 @@
+protein1,residue1,protein2,residue2,id,p value
+Snap25,148,Vamp2,18,1,1.0
+Snap25,35,Stx1a,209,2,1.0
+Snap25,39,Stx1a,213,3,1.0
+Stx1a,202,Vamp2,29,4,1.0
