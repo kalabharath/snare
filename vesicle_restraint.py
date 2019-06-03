@@ -1,7 +1,14 @@
 import IMP.pmi.restraints.basic
-
+import IMP.algebra
+import IMP.em
+import IMP.isd
 
 class VesicleMembraneRestraint(IMP.pmi.restraints.RestraintBase):
+    """
+    renamed from the original restraint name as MembraneRestraint
+    IMP.pmi.restraints.basic.MembraneRestraint(representation, objects_inside=inside, objects_above=above,
+                                                thickness=40)
+    """
     def __init__(self,
                  hier,
                  objects_above=None,
@@ -13,6 +20,7 @@ class VesicleMembraneRestraint(IMP.pmi.restraints.RestraintBase):
                  plateau=0.0000000001,
                  resolution=1,
                  weight = 1.0,
+                 radius = 1000,
                  label = None):
 
         """ Setup Membrane restraint
@@ -23,6 +31,7 @@ class VesicleMembraneRestraint(IMP.pmi.restraints.RestraintBase):
         @param objects_above list or tuples of objects above membrane
         @param objects_below list or tuples of objects below membrane
         @param thickness Thickness of the membrane along the z-axis
+        @param radius Radius of the vesicle
         @param softness Softness of the limiter in the sigmoid function
         @param plateau Parameter to set the probability (=1- plateau)) at the plateau
                        phase of the sigmoid
@@ -42,6 +51,7 @@ class VesicleMembraneRestraint(IMP.pmi.restraints.RestraintBase):
 
         self.center = center
         self.thickness = thickness
+        self.radius = radius
         self.softness = softness
         self.plateau = plateau
         self.linear = 0.02
@@ -116,28 +126,64 @@ class VesicleMembraneRestraint(IMP.pmi.restraints.RestraintBase):
                                        resolution = self.resolution).get_selected_particles()
         return particles
 
+    # Related to Visualization purpose only
+    # It is not straightforward to generate visualization files
+
+
     def create_membrane_density(self, file_out='membrane_localization.mrc'):
 
-        '''
-        Just for visualization purposes.
-        Writes density of membrane localization
-        '''
+        """
+        Just for visualization of spherical vesicles.
+        Writes density of the membrane as mrc files.
+        """
 
-        offset = 5.0*self.thickness
+        offset = 5.0 * self.thickness
         apix = 3.0
         resolution = 5.0
 
         # Create a density header of the requested size
         bbox = IMP.algebra.BoundingBox3D(
-            IMP.algebra.Vector3D(-self.center - offset, -self.center - offset, -self.center - offset,),
+            IMP.algebra.Vector3D(-self.center - offset, -self.center - offset, -self.center - offset, ),
             IMP.algebra.Vector3D(self.center + offset, self.center + offset, self.center + offset))
+
         dheader = IMP.em.create_density_header(bbox, apix)
         dheader.set_resolution(resolution)
         dmap = IMP.em.SampledDensityMap(dheader)
 
         for vox in range(dmap.get_header().get_number_of_voxels()):
             c = dmap.get_location_by_voxel(vox)
-            if self._is_membrane(c[2])==1:
+            if self._is_membrane(c[2]) == 1:
+                dmap.set_value(c[0], c[1], c[2], 1.0)
+            else:
+                dmap.set_value(c[0], c[1], c[2], 0.0)
+
+        IMP.em.write_map(dmap, file_out)
+
+    def create_vesicle_membrane_density(self, file_out='vesicle_membrane_out.mrc'):
+
+        '''
+        Just for visualization purposes.
+        Writes density of membrane localization
+        '''
+
+        offset = 5.0 * self.thickness
+        apix = 3.0
+        resolution = 5.0
+        radius = self.radius
+
+        # Create a density header of the requested size
+        bbox = IMP.algebra.Sphere3D(
+            IMP.algebra.Vector3D(self.center + offset, self.center + offset, self.center + offset),
+            self.radius)
+
+
+        dheader = IMP.em.create_density_header(bbox, apix)
+        dheader.set_resolution(resolution)
+        dmap = IMP.em.SampledDensityMap(dheader)
+
+        for vox in range(dmap.get_header().get_number_of_voxels()):
+            c = dmap.get_location_by_voxel(vox)
+            if self._is_membrane(c[2]) == 1:
                 dmap.set_value(c[0], c[1], c[2], 1.0)
             else:
                 dmap.set_value(c[0], c[1], c[2], 0.0)

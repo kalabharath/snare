@@ -86,7 +86,7 @@ st = s.create_state()
 # Setup sequences and chain ids
 offset = 0
 
-print components
+#print components
 
 for n in range(0, len(components)):
     seqs = IMP.pmi.topology.Sequences(cwd + "/data/%s.fasta" % components[n])
@@ -129,7 +129,7 @@ for mol in mols:
         if structure_file.endswith(".pdb"):
             name = structure_file.strip("\n").split(".")[0].split("_")
             if name[0] in mol.get_name():
-                print mol, name[0], name[1], name[2]
+                print "Defining DOFs", mol, name[0], name[1], name[2]
                 sel0 = mol.residue_range(name[1], name[2])
                 dof.create_rigid_body(sel0,
                                       max_trans=rb_max_trans,
@@ -164,8 +164,6 @@ for mol in mols:
     sampleobjects.append(cr)
     snares.append(mol)
 
-print (snares)
-
 sf = IMP.core.RestraintsScoringFunction(IMP.pmi.tools.get_restraint_set(m))
 
 ###############################
@@ -173,10 +171,13 @@ sf = IMP.core.RestraintsScoringFunction(IMP.pmi.tools.get_restraint_set(m))
 
 inside = [(266, 288, 'Stx1a'), (95, 116, 'Vamp2')]
 above  = [(1, 94, 'Vamp2'), (1, 265, 'Stx1a'), (1, 206, 'Snap25')]
+
 mr = VesicleMembraneRestraint(representation, objects_inside=inside, objects_above=above,
-                                                thickness=40)
+                                                thickness=40, radius=100)
+
 mr.add_to_model()
-mr.create_membrane_density(file_out=cwd+"/membrane.mrc")
+mr.create_vesicle_membrane_density(file_out=cwd+"/vesicle.mrc")
+exit()
 outputobjects.append(mr)
 dof.get_nuisances_from_restraint(mr)
 
