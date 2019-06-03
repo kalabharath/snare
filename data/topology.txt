@@ -1,0 +1,36 @@
+|directories|
+|pdb_dir|./|
+|fasta_dir|./|
+|topology_dictionary|
+
+
+|molecule_name|color    |fasta_fn   |fasta_id|pdb_fn        |chain|residue_range|pdb_offset|bead_size|rigid_body|super_rigid_body|chain_of_super_rigid_bodies|
+
+|Vamp2        |green    |Vamp2.fasta|Vamp2|BEADS         |A|1,30|0 |1|30|120||
+|Vamp2        |green    |Vamp2.fasta|Vamp2|Vamp2_31_65.pdb   |A|31,65|0 |1|30|120||
+|Vamp2        |green    |Vamp2.fasta|Vamp2|BEADS         |A|66,116|0 |1|30|120||
+
+
+|Stx1a        |turquoise|Stx1a.fasta|Stx1a   |BEADS         |     |1,30         |0         |1        |30|120||
+|Stx1a        |turquoise|Stx1a.fasta|Stx1a|Stx1a_31_156.pdb |B    |31,156       |0         |1        |30|120||
+|Stx1a        |turquoise|Stx1a.fasta|Stx1a|BEADS            |     |157,192      |0 |1|30|120||
+|Stx1a        |turquoise|Stx1a.fasta|Stx1a|Stx1a_193_255.pdb |B|193,255|0 |1|30|120||
+|Stx1a        |turquoise|Stx1a.fasta|Stx1a|BEADS         ||256,288|0 |1|30|120||
+
+
+
+|Snap25       |pink     |Snap25.fasta|Snap25|BEADS||1,11|0|1|||120||
+|Snap25       |pink     |Snap25.fasta|Snap25|Snap25_11_61.pdb|C|11,70|0|1|30|120||
+|Snap25       |pink     |Snap25.fasta|Snap25|BEADS||71,142|0|1|||120||
+|Snap25       |pink     |Snap25.fasta|Snap25|Snap25_143_206.pdb|C|143,206|0|1|30|120||
+
+|Cplx2        |yellow   |Cplx2.fasta|Cplx2|BEADS||1,31|0|1|||120||
+|Cplx2        |yellow   |Cplx2.fasta|Cplx2_32_72.pdb|D|32,72|0|1|30|120||
+|Cplx2        |yellow   |Cplx2.fasta|Cplx2|BEADS||72,134|0|1|||120||
+
+
+|Syt7         |red      |Syt7.fasta|Syt7|BEADS||1,148|0|1|||120||
+|Syt7         |red      |Syt7.fasta|Syt7_149_227.pdb|E|149,227|0|1|30|120||
+|Syt7         |red      |Syt7.fasta|Syt7|BEADS||228,262|0|1|||120||
+|Syt7         |red      |Syt7.fasta|Syt7_263_403.pdb|E|263,403|0|1|30|120||
+
