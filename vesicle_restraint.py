@@ -3,6 +3,7 @@ import IMP.algebra
 import IMP.em
 import IMP.isd
 
+
 class VesicleMembraneRestraint(IMP.pmi.restraints.RestraintBase):
     """
     renamed from the original restraint name as MembraneRestraint
@@ -129,7 +130,6 @@ class VesicleMembraneRestraint(IMP.pmi.restraints.RestraintBase):
     # Related to Visualization purpose only
     # It is not straightforward to generate visualization files
 
-
     def create_membrane_density(self, file_out='membrane_localization.mrc'):
 
         """
@@ -137,14 +137,22 @@ class VesicleMembraneRestraint(IMP.pmi.restraints.RestraintBase):
         Writes density of the membrane as mrc files.
         """
 
-        offset = 5.0 * self.thickness
-        apix = 3.0
-        resolution = 5.0
+        offset = 20.0 * self.thickness
+        apix = 10.0
+        resolution = 50.0
+
 
         # Create a density header of the requested size
         bbox = IMP.algebra.BoundingBox3D(
             IMP.algebra.Vector3D(-self.center - offset, -self.center - offset, -self.center - offset, ),
             IMP.algebra.Vector3D(self.center + offset, self.center + offset, self.center + offset))
+
+        """
+        L = 1500
+        # define bounding box
+        bbox = IMP.algebra.BoundingBox3D(IMP.algebra.Vector3D(-L / 2, -L / 2, -L / 2),
+                                         IMP.algebra.Vector3D(L / 2, L / 2, L / 2))
+        """
 
         dheader = IMP.em.create_density_header(bbox, apix)
         dheader.set_resolution(resolution)
@@ -169,13 +177,11 @@ class VesicleMembraneRestraint(IMP.pmi.restraints.RestraintBase):
         offset = 5.0 * self.thickness
         apix = 3.0
         resolution = 5.0
-        radius = self.radius
 
         # Create a density header of the requested size
         bbox = IMP.algebra.Sphere3D(
             IMP.algebra.Vector3D(self.center + offset, self.center + offset, self.center + offset),
             self.radius)
-
 
         dheader = IMP.em.create_density_header(bbox, apix)
         dheader.set_resolution(resolution)
@@ -195,3 +201,77 @@ class VesicleMembraneRestraint(IMP.pmi.restraints.RestraintBase):
             return 1
         else:
             return 0
+
+
+class COMDistanceRestraint(IMP.pmi.restraints.RestraintBase):
+
+    def __init__(self,
+                 root_hier,
+                 protein1,
+                 protein2,
+                 distance=60.0,
+                 strength=1.0,
+                 label=None,
+                 weight=1.0):
+
+        """ Setup an upper-bound distance restraint
+            between the center-of-mass of two proteins
+        @ param root_hier
+        @ param protein1
+        @ param protein2
+        @ param distance
+        @ param strength
+        @ param label
+        @ param weight
+        """
+
+        self.root_hier = root_hier
+
+        model = self.root_hier.get_model()
+
+        rname = "COMDistanceRestraint"
+        super(COMDistanceRestraint, self).__init__(
+            model, name="COMDistanceRestraint", label=label, weight=weight)
+
+        self.strength = strength
+        self.weight = weight
+        self.distance = distance
+
+        # Setup restraint
+        self.rs = self._create_restraint_set()
+
+        s0 = IMP.atom.Selection(root_hier, molecule= protein0)
+
+        p0 = s0.get_selected_particles()
+        if len(p0) == 0:
+            print("COMDistanceRestraint: WARNING> cannot select protein %s)" % (prot0))
+            exit()
+        s1 = IMP.atom.Selection(root_hier,
+                                molecule=protein1)
+        p1 = s1.get_selected_particles()
+        if len(p1) == 0:
+            print("COMDistanceRestraint: WARNING> cannot select protein %s)" % (prot0))
+            exit()
+
+        # Get COMs
+        self.com0 = IMP.atom.CenterOfMass.setup_particle(IMP.Particle(model), p0)
+        self.com1 = IMP.atom.CenterOfMass.setup_particle(IMP.Particle(model), p1)
+
+        coor0 = IMP.core.XYZ(self.com0).get_coordinates()
+        coor1 = IMP.core.XYZ(self.com1).get_coordinates()
+
+        d = IMP.algebra.get_distance(coor0, coor1)
+
+        # Distance restraint
+        hub = IMP.core.HarmonicUpperBound(self.distance,
+                                          self.strength)
+
+        df = IMP.core.DistancePairScore(hub)
+        dr = IMP.core.PairRestraint(model, df, (self.com0, self.com1))
+        self.rs.add_restraint(dr)
+
+    def get_output(self):
+
+        output = super(COMDistanceRestraint, self).get_output()
+
+        return output

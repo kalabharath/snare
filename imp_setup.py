@@ -1,8 +1,7 @@
 """
-This script samples SNARE complex proteins with fake cross-links data from known complexes
+This script samples SNARE complex proteins with fake cross-links data from known protein complexes
 Author: Kala Bharath Pilla
 Email: kalabharath@salilab.org
-
 """
 
 # Import IMP modules
@@ -16,6 +15,7 @@ import IMP.pmi.dof
 import IMP.pmi.macros
 import IMP.pmi.restraints
 import IMP.pmi.restraints.stereochemistry
+import IMP.pmi.restraints.basic
 from vesicle_restraint import VesicleMembraneRestraint
 import IMP.pmi.restraints.proteomics
 import IMP.pmi.io.crosslink
@@ -23,13 +23,19 @@ import IMP.pmi.restraints.crosslinking
 import IMP.algebra
 import IMP.pmi.analysis
 import IMP.mpi
+import IMP.rmf
+import RMF
 
 import IMP.core
 import sys, os, glob
 
-# ---------------------------
+# ********************************************
+#
+# Define the SNARE complex system
+#
+# ********************************************
+
 # Define Input Files
-# ---------------------------
 
 datadirectory = "./data/"
 list_of_files = os.listdir("./data/")
@@ -60,16 +66,12 @@ bead_max_trans = 2.00
 # Initialize model
 m = IMP.Model()
 
-# create list of components from topology file
 
-
-"""
-colors = ['green', 'turquoise', 'pink', 'yellow', 'red']
-components = ['Vamp2', 'Stx1a', 'Snap25', 'Cplx2', 'Syt7']
-chains = 'ABCDE'
-colors = ['green', 'turquoise', 'pink', 'yellow']
-"""
-
+# ********************************************
+#
+# Define the SNARE complex system
+#
+# ********************************************
 
 colors = ['green', 'turquoise', 'magenta', 'orange']
 components = ['Vamp2', 'Stx1a', 'Snap25', 'Cplx2']
@@ -80,13 +82,8 @@ subs = []
 
 # Create system and state
 
-s = IMP.pmi.topology.System(m)
+s = IMP.pmi.topology.System(m, name="Snare")
 st = s.create_state()
-
-# Setup sequences and chain ids
-offset = 0
-
-#print components
 
 for n in range(0, len(components)):
     seqs = IMP.pmi.topology.Sequences(cwd + "/data/%s.fasta" % components[n])
@@ -94,22 +91,19 @@ for n in range(0, len(components)):
 
     for pdb in list_of_files:
         if (pdb.startswith(components[n])) and pdb.endswith(".pdb"):
-            atomic = mol.add_structure(cwd + '/data/%s' % pdb, chain_id=chains[n], offset=offset)
+            atomic = mol.add_structure(cwd + '/data/%s' % pdb, chain_id=chains[n], offset=0)
             mol.add_representation(atomic, resolutions=[1, 5], color=colors[n], bead_ca_centers=True)
-
     mols.append(mol)
 
 for mol in mols:
     mol.add_representation(mol[:] - mol.get_atomic_residues(), resolutions=[all_cg_bead_size],
                            color=colors[mols.index(mol)])
 
-
 # calling System.build() creates all States and Molecules (and their representations)
 # Once you call build(), anything without representation is destroyed.
-representation = s.build()
+h1_root = s.build()
 
-# For verbose output of the representation
-IMP.atom.show_with_representations(representation)
+# Combine hierarchies TODO fix the naming and the hierarchy
 
 # --------------------------
 # Define Degrees of Freedom
@@ -135,8 +129,6 @@ for mol in mols:
                                       max_trans=rb_max_trans,
                                       max_rot=rb_max_rot,
                                       nonrigid_max_trans=bead_max_trans)
-
-    # dof.create_super_rigid_body(mol)
 
 # --------------------------
 # Define Restraints
@@ -172,12 +164,9 @@ sf = IMP.core.RestraintsScoringFunction(IMP.pmi.tools.get_restraint_set(m))
 inside = [(266, 288, 'Stx1a'), (95, 116, 'Vamp2')]
 above  = [(1, 94, 'Vamp2'), (1, 265, 'Stx1a'), (1, 206, 'Snap25')]
 
-mr = VesicleMembraneRestraint(representation, objects_inside=inside, objects_above=above,
-                                                thickness=40, radius=100)
-
+mr = VesicleMembraneRestraint(h1_root, objects_inside=inside, objects_above=above, thickness=40, radius=100)
 mr.add_to_model()
-mr.create_vesicle_membrane_density(file_out=cwd+"/vesicle.mrc")
-exit()
+mr.create_membrane_density(file_out=cwd+"/vesicle.mrc")
 outputobjects.append(mr)
 dof.get_nuisances_from_restraint(mr)
 
@@ -217,7 +206,7 @@ for xldb in xls_objs:
     tlength = int(tlength.lstrip("xl_"))
     print "the length of :", csv_file, tlength
 
-    xls = IMP.pmi.restraints.crosslinking.CrossLinkingMassSpectrometryRestraint(root_hier=representation,
+    xls = IMP.pmi.restraints.crosslinking.CrossLinkingMassSpectrometryRestraint(root_hier=h1_root,
                                                                                 CrossLinkDataBase=xldb,
                                                                                 length=tlength,
                                                                                 label="XLS_" + str(tlength),
@@ -234,21 +223,61 @@ print sampleobjects
 sf = IMP.core.RestraintsScoringFunction(IMP.pmi.tools.get_restraint_set(m))
 sf.evaluate(False)
 
-IMP.pmi.tools.shuffle_configuration(representation)
+IMP.pmi.tools.shuffle_configuration(h1_root)
 dof.optimize_flexible_beads(200)
+
+
+# ********************************************
+#
+# Define the Insulin vesicle system
+#
+# ********************************************
+
+s2 = IMP.pmi.topology.System(m, name='Insulin Vesicle')
+st2 = s2.create_state()
+mol_v = st2.create_molecule('vesicle')
+hier_bead = s2.build()
+
+ch = hier_bead.get_children()
+ves = IMP.atom.get_leaves(ch[0])[0]
+xyzr = IMP.core.XYZR.setup_particle(ves.get_particle())
+xyzr.set_coordinates_are_optimized(True)
+
+xyzr.set_coordinates((0,0,400))
+xyzr.set_radius(400)
+IMP.atom.Mass.setup_particle(xyzr, 1)
+IMP.atom.show_with_representations(hier_bead)
 
 # --------------------------
 # Excluded Volume
 # --------------------------
 # This object defines all components to be sampled as well as the sampling protocol
 
-ev1 = IMP.pmi.restraints.stereochemistry.ExcludedVolumeSphere(included_objects=mols,
-                                                              resolution=10)
+ev1 = IMP.pmi.restraints.stereochemistry.ExcludedVolumeSphere(included_objects=mols, other_objects=hier_bead, resolution=10)
 ev1.add_to_model()
 ev1.set_label('Snare')
 outputobjects.append(ev1)
 
 sf = IMP.core.RestraintsScoringFunction(IMP.pmi.tools.get_restraint_set(m))
+
+#######################
+# Merge
+#######################
+
+p = IMP.Particle(m)
+hier_all = IMP.atom.Hierarchy.setup_particle(p)
+hier_all.add_child(h1_root)
+hier_all.add_child(hier_bead)
+hier_all.set_name('System')
+
+IMP.atom.show_with_representations(hier_all)
+
+# Visualize before
+# Write initial configuration
+output = IMP.pmi.output.Output()
+output.init_rmf("ini_all.rmf3", [hier_all])
+output.write_rmf("ini_all.rmf3")
+output.close_rmf("ini_all.rmf3")
 
 # --------------------------
 # Monte-Carlo Sampling
@@ -256,7 +285,7 @@ sf = IMP.core.RestraintsScoringFunction(IMP.pmi.tools.get_restraint_set(m))
 # This object defines all components to be sampled as well as the sampling protocol
 
 mc0 = IMP.pmi.macros.ReplicaExchange0(m,
-                                      root_hier=representation,
+                                      root_hier=hier_all,
                                       monte_carlo_sample_objects=dof.get_movers(),
                                       output_objects=outputobjects,
                                       crosslink_restraints=sampleobjects,
