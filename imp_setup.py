@@ -158,19 +158,22 @@ for mol in mols:
 
 sf = IMP.core.RestraintsScoringFunction(IMP.pmi.tools.get_restraint_set(m))
 
-###############################
-# Membrane Restraint
+
+# --------------------------
+# Membrane Restraints
+# --------------------------
+
 
 inside = [(266, 288, 'Stx1a'), (95, 116, 'Vamp2')]
 above  = [(1, 94, 'Vamp2'), (1, 265, 'Stx1a'), (1, 206, 'Snap25')]
 
 mr = VesicleMembraneRestraint(h1_root, objects_inside=inside, objects_above=above, thickness=40, radius=100)
+print "wts inside mr:", mr
 mr.add_to_model()
 mr.create_membrane_density(file_out=cwd+"/vesicle.mrc")
 outputobjects.append(mr)
 dof.get_nuisances_from_restraint(mr)
 
-###############################
 
 # --------------------------
 # Crosslinks - datasets
@@ -223,9 +226,6 @@ print sampleobjects
 sf = IMP.core.RestraintsScoringFunction(IMP.pmi.tools.get_restraint_set(m))
 sf.evaluate(False)
 
-IMP.pmi.tools.shuffle_configuration(h1_root)
-dof.optimize_flexible_beads(200)
-
 
 # ********************************************
 #
@@ -247,7 +247,23 @@ xyzr.set_coordinates((0,0,400))
 xyzr.set_radius(400)
 IMP.atom.Mass.setup_particle(xyzr, 1)
 IMP.atom.show_with_representations(hier_bead)
+"""
+# ------------------------------------
+# Membrane restraint for the vesicle
+# ------------------------------------
+# probably not a good idea to implement: the vesicle Z coordinate is
+# restrained and for the vesicle it would mean that it will be at the
+# center of the sphere, unless you change the coordinate system
 
+vesicle_outputobjects = []
+vesicle_mem_constraint = ['vesicle']
+mr2 = VesicleMembraneRestraint(hier_bead, objects_inside=vesicle_mem_constraint, thickness=40, radius=100)
+mr2.add_to_model()
+print "wts inside mr2:", mr2
+outputobjects.append(mr2)
+
+dof.get_nuisances_from_restraint(mr2)
+"""
 # --------------------------
 # Excluded Volume
 # --------------------------
@@ -260,9 +276,10 @@ outputobjects.append(ev1)
 
 sf = IMP.core.RestraintsScoringFunction(IMP.pmi.tools.get_restraint_set(m))
 
-#######################
-# Merge
-#######################
+
+# -------------------------------------
+# Merge hierarchies before sampling
+# -------------------------------------
 
 p = IMP.Particle(m)
 hier_all = IMP.atom.Hierarchy.setup_particle(p)
@@ -272,17 +289,24 @@ hier_all.set_name('System')
 
 IMP.atom.show_with_representations(hier_all)
 
-# Visualize before
-# Write initial configuration
+# ---------------------------------
+# Visualize initial configuration
+# ---------------------------------
+
 output = IMP.pmi.output.Output()
 output.init_rmf("ini_all.rmf3", [hier_all])
 output.write_rmf("ini_all.rmf3")
 output.close_rmf("ini_all.rmf3")
 
-# --------------------------
-# Monte-Carlo Sampling
-# --------------------------
+print "Writing initial system state"
+
+# ----------------------------------------------------
+# Sampling the entire system by Monte-Carlo
+# ----------------------------------------------------
 # This object defines all components to be sampled as well as the sampling protocol
+
+#IMP.pmi.tools.shuffle_configuration(h1_root)
+#dof.optimize_flexible_beads(200)
 
 mc0 = IMP.pmi.macros.ReplicaExchange0(m,
                                       root_hier=hier_all,

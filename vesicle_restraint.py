@@ -84,11 +84,15 @@ class VesicleMembraneRestraint(IMP.pmi.restraints.RestraintBase):
         # Particles inside
         if objects_inside:
             for obj in objects_inside:
+                print "What are objects_inside: ", obj
                 if isinstance(obj, tuple):
                     self.particles_inside = self._select_from_tuple(obj)
+                    print "Particles inside", self.particles_inside
 
                 elif isinstance(obj, str):
                     self.particles_inside = self._select_from_string(obj)
+                    print "vesicle inside", self.particles_inside
+
                 mr.add_particles_inside(self.particles_inside)
 
 
@@ -141,18 +145,10 @@ class VesicleMembraneRestraint(IMP.pmi.restraints.RestraintBase):
         apix = 10.0
         resolution = 50.0
 
-
         # Create a density header of the requested size
         bbox = IMP.algebra.BoundingBox3D(
             IMP.algebra.Vector3D(-self.center - offset, -self.center - offset, -self.center - offset, ),
             IMP.algebra.Vector3D(self.center + offset, self.center + offset, self.center + offset))
-
-        """
-        L = 1500
-        # define bounding box
-        bbox = IMP.algebra.BoundingBox3D(IMP.algebra.Vector3D(-L / 2, -L / 2, -L / 2),
-                                         IMP.algebra.Vector3D(L / 2, L / 2, L / 2))
-        """
 
         dheader = IMP.em.create_density_header(bbox, apix)
         dheader.set_resolution(resolution)
