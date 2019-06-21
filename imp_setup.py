@@ -103,8 +103,6 @@ for mol in mols:
 # Once you call build(), anything without representation is destroyed.
 h1_root = s.build()
 
-# Combine hierarchies TODO fix the naming and the hierarchy
-
 # --------------------------
 # Define Degrees of Freedom
 # --------------------------
@@ -168,12 +166,10 @@ inside = [(266, 288, 'Stx1a'), (95, 116, 'Vamp2')]
 above  = [(1, 94, 'Vamp2'), (1, 265, 'Stx1a'), (1, 206, 'Snap25')]
 
 mr = VesicleMembraneRestraint(h1_root, objects_inside=inside, objects_above=above, thickness=40, radius=100)
-print "wts inside mr:", mr
 mr.add_to_model()
 mr.create_membrane_density(file_out=cwd+"/vesicle.mrc")
 outputobjects.append(mr)
 dof.get_nuisances_from_restraint(mr)
-
 
 # --------------------------
 # Crosslinks - datasets
@@ -182,10 +178,7 @@ dof.get_nuisances_from_restraint(mr)
 # Here assuming that it's a CSV file with column names that may need to change
 # Other options include the linker length and the slope (for nudging components together)
 
-
 csv_files = glob.glob(cwd + "/data/*.csv")
-print csv_files
-
 kw = IMP.pmi.io.crosslink.CrossLinkDataBaseKeywordsConverter()
 kw.set_unique_id_key("id")
 kw.set_protein1_key("protein1")
@@ -202,12 +195,10 @@ for csv_file in csv_files:
 
 for xldb in xls_objs:
     csv_file = csv_files[xls_objs.index(xldb)]
-    print "Extracting restraints from this file:", csv_file
     xldb.create_set_from_file(csv_file)
     tlength = csv_file.split("/")
     tlength = tlength[-1].rstrip(".csv")
     tlength = int(tlength.lstrip("xl_"))
-    print "the length of :", csv_file, tlength
 
     xls = IMP.pmi.restraints.crosslinking.CrossLinkingMassSpectrometryRestraint(root_hier=h1_root,
                                                                                 CrossLinkDataBase=xldb,
@@ -221,11 +212,8 @@ for xldb in xls_objs:
     outputobjects.append(xls)
     dof.get_nuisances_from_restraint(xls)
 
-print sampleobjects
-
 sf = IMP.core.RestraintsScoringFunction(IMP.pmi.tools.get_restraint_set(m))
 sf.evaluate(False)
-
 
 # ********************************************
 #
@@ -247,6 +235,7 @@ xyzr.set_coordinates((0,0,400))
 xyzr.set_radius(400)
 IMP.atom.Mass.setup_particle(xyzr, 1)
 IMP.atom.show_with_representations(hier_bead)
+
 """
 # ------------------------------------
 # Membrane restraint for the vesicle
@@ -254,16 +243,16 @@ IMP.atom.show_with_representations(hier_bead)
 # probably not a good idea to implement: the vesicle Z coordinate is
 # restrained and for the vesicle it would mean that it will be at the
 # center of the sphere, unless you change the coordinate system
-
+# *** this will not work so don't bother ***
 vesicle_outputobjects = []
 vesicle_mem_constraint = ['vesicle']
 mr2 = VesicleMembraneRestraint(hier_bead, objects_inside=vesicle_mem_constraint, thickness=40, radius=100)
 mr2.add_to_model()
 print "wts inside mr2:", mr2
 outputobjects.append(mr2)
-
 dof.get_nuisances_from_restraint(mr2)
 """
+
 # --------------------------
 # Excluded Volume
 # --------------------------
@@ -276,9 +265,8 @@ outputobjects.append(ev1)
 
 sf = IMP.core.RestraintsScoringFunction(IMP.pmi.tools.get_restraint_set(m))
 
-
 # -------------------------------------
-# Merge hierarchies before sampling
+# Combine hierarchies
 # -------------------------------------
 
 p = IMP.Particle(m)

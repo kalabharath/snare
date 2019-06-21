@@ -242,13 +242,11 @@ class COMDistanceRestraint(IMP.pmi.restraints.RestraintBase):
         if len(p0) == 0:
             print("COMDistanceRestraint: WARNING> cannot select protein %s)" % (prot0))
             exit()
-        s1 = IMP.atom.Selection(root_hier,
-                                molecule=protein1)
+        s1 = IMP.atom.Selection(root_hier, molecule=protein1)
         p1 = s1.get_selected_particles()
         if len(p1) == 0:
             print("COMDistanceRestraint: WARNING> cannot select protein %s)" % (prot0))
             exit()
-
         # Get COMs
         self.com0 = IMP.atom.CenterOfMass.setup_particle(IMP.Particle(model), p0)
         self.com1 = IMP.atom.CenterOfMass.setup_particle(IMP.Particle(model), p1)
@@ -259,8 +257,7 @@ class COMDistanceRestraint(IMP.pmi.restraints.RestraintBase):
         d = IMP.algebra.get_distance(coor0, coor1)
 
         # Distance restraint
-        hub = IMP.core.HarmonicUpperBound(self.distance,
-                                          self.strength)
+        hub = IMP.core.HarmonicUpperBound(self.distance, self.strength)
 
         df = IMP.core.DistancePairScore(hub)
         dr = IMP.core.PairRestraint(model, df, (self.com0, self.com1))
@@ -269,5 +266,4 @@ class COMDistanceRestraint(IMP.pmi.restraints.RestraintBase):
     def get_output(self):
 
         output = super(COMDistanceRestraint, self).get_output()
-
         return output
