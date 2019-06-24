@@ -70,6 +70,7 @@ m = IMP.Model()
 colors = ['green', 'turquoise', 'magenta', 'orange']
 components = ['Vamp2', 'Stx1a', 'Snap25', 'Cplx2']
 chains = 'ABCD'
+radius_of_the_vesicle = 400
 
 mols = []
 subs = []
@@ -155,15 +156,14 @@ sf = IMP.core.RestraintsScoringFunction(IMP.pmi.tools.get_restraint_set(m))
 # --------------------------
 
 
-inside = [(266, 288, 'Stx1a'), (95, 116, 'Vamp2')]
-above = [(1, 94, 'Vamp2'), (1, 265, 'Stx1a'), (1, 206, 'Snap25')]
+inside = [(266, 288, 'Stx1a')]
+above = [(1, 265, 'Stx1a'), (1, 94, 'Vamp2'), (1, 206, 'Snap25')]
 
 mr = VesicleMembraneRestraint(h1_root, objects_inside=inside, objects_above=above, thickness=40, radius=100)
 mr.add_to_model()
 mr.create_membrane_density(file_out=cwd + "/vesicle.mrc")
 outputobjects.append(mr)
 dof.get_nuisances_from_restraint(mr)
-
 
 # --------------------------
 # Crosslinks - datasets
@@ -209,7 +209,6 @@ for xldb in xls_objs:
 sf = IMP.core.RestraintsScoringFunction(IMP.pmi.tools.get_restraint_set(m))
 sf.evaluate(False)
 
-
 # ********************************************
 #
 # Define the Insulin vesicle system
@@ -226,8 +225,8 @@ ves = IMP.atom.get_leaves(ch[0])[0]
 xyzr = IMP.core.XYZR.setup_particle(ves.get_particle())
 xyzr.set_coordinates_are_optimized(True)
 
-xyzr.set_coordinates((0, 0, 400))
-xyzr.set_radius(400)
+xyzr.set_coordinates((0, 0, radius_of_the_vesicle))
+xyzr.set_radius(radius_of_the_vesicle)
 IMP.atom.Mass.setup_particle(xyzr, 1)
 IMP.atom.show_with_representations(hier_bead)
 
@@ -278,9 +277,21 @@ IMP.atom.show_with_representations(hier_all)
 # SNAREs and the vesicle
 # -------------------------------------
 
-vs_dist = COMDistanceRestraint(root_hier=hier_all, protein0='vesicle', protein1='Vamp2', distance=400, strength=1.0, label=None,
+inside_vesicle = [(95, 116, 'Vamp2')]
+outside_vesicle = [(1, 94, 'Vamp2')]
+
+vs_dist = COMDistanceRestraint(root_hier=hier_all, protein0='vesicle', protein1='Vamp2',
+                               ves_membrane_inside=inside_vesicle, distance=radius_of_the_vesicle, strength=1.0,
+                               label=None,
                                weight=1.0)
 vs_dist.add_to_model()
+
+# ---------------------------------
+# Shuffle the initial configuration
+# ---------------------------------
+
+IMP.pmi.tools.shuffle_configuration(h1_root)
+dof.optimize_flexible_beads(200)
 
 # ---------------------------------
 # Visualize initial configuration
@@ -297,9 +308,6 @@ print "Writing initial system state"
 # Sampling the entire system by Monte-Carlo
 # ----------------------------------------------------
 # This object defines all components to be sampled as well as the sampling protocol
-
-IMP.pmi.tools.shuffle_configuration(h1_root)
-dof.optimize_flexible_beads(200)
 
 mc0 = IMP.pmi.macros.ReplicaExchange0(m,
                                       root_hier=hier_all,

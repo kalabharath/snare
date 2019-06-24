@@ -1,11 +1,11 @@
-import IMP.core
-import IMP.pmi.restraints
-import IMP.pmi.restraints.stereochemistry
-import IMP.pmi.restraints.basic
 import IMP.algebra
+import IMP.atom
+import IMP.core
 import IMP.em
 import IMP.isd
-import IMP.atom
+import IMP.pmi.restraints
+import IMP.pmi.restraints.basic
+import IMP.pmi.restraints.stereochemistry
 
 
 class VesicleMembraneRestraint(IMP.pmi.restraints.RestraintBase):
@@ -14,19 +14,20 @@ class VesicleMembraneRestraint(IMP.pmi.restraints.RestraintBase):
     IMP.pmi.restraints.basic.MembraneRestraint(representation, objects_inside=inside, objects_above=above,
                                                 thickness=40)
     """
+
     def __init__(self,
                  hier,
                  objects_above=None,
                  objects_inside=None,
                  objects_below=None,
-                 center = 0.0,
+                 center=0.0,
                  thickness=30.0,
                  softness=3.0,
                  plateau=0.0000000001,
                  resolution=1,
-                 weight = 1.0,
-                 radius = 1000,
-                 label = None):
+                 weight=1.0,
+                 radius=1000,
+                 label=None):
 
         """ Setup Membrane restraint
 
@@ -99,7 +100,6 @@ class VesicleMembraneRestraint(IMP.pmi.restraints.RestraintBase):
 
                 mr.add_particles_inside(self.particles_inside)
 
-
         # Particles below
         if objects_below:
             for obj in objects_below:
@@ -123,16 +123,16 @@ class VesicleMembraneRestraint(IMP.pmi.restraints.RestraintBase):
 
     def _select_from_tuple(self, obj):
         particles = IMP.atom.Selection(self.hier,
-                                       molecule = obj[2],
-                                       residue_indexes = range(obj[0], obj[1]+1, 1),
-                                       resolution = self.resolution).get_selected_particles()
+                                       molecule=obj[2],
+                                       residue_indexes=range(obj[0], obj[1] + 1, 1),
+                                       resolution=self.resolution).get_selected_particles()
 
         return particles
 
     def _select_from_string(self, obj):
         particles = IMP.atom.Selection(self.hier,
-                                       molecule = obj,
-                                       resolution = self.resolution).get_selected_particles()
+                                       molecule=obj,
+                                       resolution=self.resolution).get_selected_particles()
         return particles
 
     # Related to Visualization purpose only
@@ -197,7 +197,7 @@ class VesicleMembraneRestraint(IMP.pmi.restraints.RestraintBase):
         IMP.em.write_map(dmap, file_out)
 
     def _is_membrane(self, z):
-        if (z-self.center) < self.thickness/2.0 and  (z-self.center) >= -self.thickness/2.0 :
+        if (z - self.center) < self.thickness / 2.0 and (z - self.center) >= -self.thickness / 2.0:
             return 1
         else:
             return 0
@@ -209,6 +209,7 @@ class COMDistanceRestraint(IMP.pmi.restraints.RestraintBase):
                  root_hier,
                  protein0,
                  protein1,
+                 ves_membrane_inside,
                  distance=60.0,
                  strength=1.0,
                  label=None,
@@ -240,18 +241,39 @@ class COMDistanceRestraint(IMP.pmi.restraints.RestraintBase):
         # Setup restraint
         self.rs = self._create_restraint_set()
 
-        s0 = IMP.atom.Selection(root_hier, molecule= protein0)
-
+        s0 = IMP.atom.Selection(root_hier, molecule=protein0)
         p0 = s0.get_selected_particles()
+
         if len(p0) == 0:
-            print("COMDistanceRestraint: WARNING> cannot select protein %s)" % (prot0))
+            print("COMDistanceRestraint: WARNING> cannot select protein %s)" % protein0)
             exit()
+
+        """
         s1 = IMP.atom.Selection(root_hier, molecule=protein1)
         p1 = s1.get_selected_particles()
         if len(p1) == 0:
-            print("COMDistanceRestraint: WARNING> cannot select protein %s)" % (prot0))
+            print("COMDistanceRestraint: WARNING> cannot select protein %s)" % protein1)
             exit()
         # Get COMs
+
+        print (p0)
+        print (p1)
+        print ("*****************see above******************")
+        """
+        # reassign the particles
+        obj = ves_membrane_inside[0]
+        s1 = IMP.atom.Selection(root_hier, molecule=protein1,
+                                residue_indexes=range(obj[0], obj[1] + 1, 1))
+        p1 = s1.get_selected_particles()
+
+        print (p1)
+        print ("*****************see above******************")
+        if len(p1) == 0:
+            print("COMDistanceRestraint: WARNING> cannot select protein %s)" % protein1)
+            exit()
+
+        # include only the residues for the terminal end of the molecule for distance calculation
+
         self.com0 = IMP.atom.CenterOfMass.setup_particle(IMP.Particle(model), p0)
         self.com1 = IMP.atom.CenterOfMass.setup_particle(IMP.Particle(model), p1)
 
