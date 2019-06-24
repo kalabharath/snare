@@ -4,30 +4,25 @@ Author: Kala Bharath Pilla
 Email: kalabharath@salilab.org
 """
 
+import glob
+import os
+import sys
+
 # Import IMP modules
-import IMP
 import IMP.atom
-import IMP.rmf
+import IMP.core
 import IMP.pmi
-import IMP.pmi.tools
-import IMP.pmi.topology
 import IMP.pmi.dof
+import IMP.pmi.io.crosslink
 import IMP.pmi.macros
 import IMP.pmi.restraints
-import IMP.pmi.restraints.stereochemistry
-import IMP.pmi.restraints.basic
-from vesicle_restraint import VesicleMembraneRestraint
-import IMP.pmi.restraints.proteomics
-import IMP.pmi.io.crosslink
 import IMP.pmi.restraints.crosslinking
-import IMP.algebra
-import IMP.pmi.analysis
-import IMP.mpi
-import IMP.rmf
-import RMF
+import IMP.pmi.restraints.stereochemistry
+import IMP.pmi.tools
+import IMP.pmi.topology
 
-import IMP.core
-import sys, os, glob
+from vesicle_restraint import COMDistanceRestraint
+from vesicle_restraint import VesicleMembraneRestraint
 
 # ********************************************
 #
@@ -65,7 +60,6 @@ bead_max_trans = 2.00
 # --------------------------------
 # Initialize model
 m = IMP.Model()
-
 
 # ********************************************
 #
@@ -156,21 +150,21 @@ for mol in mols:
 
 sf = IMP.core.RestraintsScoringFunction(IMP.pmi.tools.get_restraint_set(m))
 
-
 # --------------------------
 # Membrane Restraints
 # --------------------------
 
 
 inside = [(266, 288, 'Stx1a'), (95, 116, 'Vamp2')]
-above  = [(1, 94, 'Vamp2'), (1, 265, 'Stx1a'), (1, 206, 'Snap25')]
+above = [(1, 94, 'Vamp2'), (1, 265, 'Stx1a'), (1, 206, 'Snap25')]
 
 mr = VesicleMembraneRestraint(h1_root, objects_inside=inside, objects_above=above, thickness=40, radius=100)
 mr.add_to_model()
-mr.create_membrane_density(file_out=cwd+"/vesicle.mrc")
+mr.create_membrane_density(file_out=cwd + "/vesicle.mrc")
 outputobjects.append(mr)
 dof.get_nuisances_from_restraint(mr)
 
+"""
 # --------------------------
 # Crosslinks - datasets
 # --------------------------
@@ -215,6 +209,7 @@ for xldb in xls_objs:
 sf = IMP.core.RestraintsScoringFunction(IMP.pmi.tools.get_restraint_set(m))
 sf.evaluate(False)
 
+"""
 # ********************************************
 #
 # Define the Insulin vesicle system
@@ -231,7 +226,7 @@ ves = IMP.atom.get_leaves(ch[0])[0]
 xyzr = IMP.core.XYZR.setup_particle(ves.get_particle())
 xyzr.set_coordinates_are_optimized(True)
 
-xyzr.set_coordinates((0,0,400))
+xyzr.set_coordinates((0, 0, 400))
 xyzr.set_radius(400)
 IMP.atom.Mass.setup_particle(xyzr, 1)
 IMP.atom.show_with_representations(hier_bead)
@@ -258,7 +253,8 @@ dof.get_nuisances_from_restraint(mr2)
 # --------------------------
 # This object defines all components to be sampled as well as the sampling protocol
 
-ev1 = IMP.pmi.restraints.stereochemistry.ExcludedVolumeSphere(included_objects=mols, other_objects=hier_bead, resolution=10)
+ev1 = IMP.pmi.restraints.stereochemistry.ExcludedVolumeSphere(included_objects=mols, other_objects=hier_bead,
+                                                              resolution=10)
 ev1.add_to_model()
 ev1.set_label('Snare')
 outputobjects.append(ev1)
@@ -277,6 +273,20 @@ hier_all.set_name('System')
 
 IMP.atom.show_with_representations(hier_all)
 
+# -------------------------------------
+# Distance restraint between
+# -------------------------------------
+
+print ves
+print snares
+
+
+vs_dist = COMDistanceRestraint(root_hier=hier_all, protein0='vesicle', protein1='Vamp2', distance=400, strength=1.0, label=None,
+                               weight=1.0)
+vs_dist.add_to_model()
+
+
+
 # ---------------------------------
 # Visualize initial configuration
 # ---------------------------------
@@ -287,14 +297,14 @@ output.write_rmf("ini_all.rmf3")
 output.close_rmf("ini_all.rmf3")
 
 print "Writing initial system state"
-
+exit()
 # ----------------------------------------------------
 # Sampling the entire system by Monte-Carlo
 # ----------------------------------------------------
 # This object defines all components to be sampled as well as the sampling protocol
 
-#IMP.pmi.tools.shuffle_configuration(h1_root)
-#dof.optimize_flexible_beads(200)
+# IMP.pmi.tools.shuffle_configuration(h1_root)
+# dof.optimize_flexible_beads(200)
 
 mc0 = IMP.pmi.macros.ReplicaExchange0(m,
                                       root_hier=hier_all,

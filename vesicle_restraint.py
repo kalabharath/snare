@@ -1,3 +1,6 @@
+import IMP.core
+import IMP.pmi.restraints
+import IMP.pmi.restraints.stereochemistry
 import IMP.pmi.restraints.basic
 import IMP.algebra
 import IMP.em
@@ -203,8 +206,8 @@ class COMDistanceRestraint(IMP.pmi.restraints.RestraintBase):
 
     def __init__(self,
                  root_hier,
+                 protein0,
                  protein1,
-                 protein2,
                  distance=60.0,
                  strength=1.0,
                  label=None,
