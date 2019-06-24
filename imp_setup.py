@@ -274,18 +274,13 @@ hier_all.set_name('System')
 IMP.atom.show_with_representations(hier_all)
 
 # -------------------------------------
-# Distance restraint between
+# Distance restraint between \
+# SNAREs and the vesicle
 # -------------------------------------
-
-print ves
-print snares
-
 
 vs_dist = COMDistanceRestraint(root_hier=hier_all, protein0='vesicle', protein1='Vamp2', distance=400, strength=1.0, label=None,
                                weight=1.0)
 vs_dist.add_to_model()
-
-
 
 # ---------------------------------
 # Visualize initial configuration
@@ -297,7 +292,7 @@ output.write_rmf("ini_all.rmf3")
 output.close_rmf("ini_all.rmf3")
 
 print "Writing initial system state"
-exit()
+
 # ----------------------------------------------------
 # Sampling the entire system by Monte-Carlo
 # ----------------------------------------------------
