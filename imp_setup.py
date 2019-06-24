@@ -164,7 +164,7 @@ mr.create_membrane_density(file_out=cwd + "/vesicle.mrc")
 outputobjects.append(mr)
 dof.get_nuisances_from_restraint(mr)
 
-"""
+
 # --------------------------
 # Crosslinks - datasets
 # --------------------------
@@ -209,7 +209,7 @@ for xldb in xls_objs:
 sf = IMP.core.RestraintsScoringFunction(IMP.pmi.tools.get_restraint_set(m))
 sf.evaluate(False)
 
-"""
+
 # ********************************************
 #
 # Define the Insulin vesicle system
