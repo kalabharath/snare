@@ -155,7 +155,6 @@ sf = IMP.core.RestraintsScoringFunction(IMP.pmi.tools.get_restraint_set(m))
 # Membrane Restraints
 # --------------------------
 
-
 inside = [(266, 288, 'Stx1a')]
 above = [(1, 265, 'Stx1a'), (1, 94, 'Vamp2'), (1, 206, 'Snap25')]
 
@@ -285,6 +284,7 @@ vs_dist = COMDistanceRestraint(root_hier=hier_all, protein0='vesicle', protein1=
                                label=None,
                                weight=1.0)
 vs_dist.add_to_model()
+outputobjects.append(vs_dist)
 
 # ---------------------------------
 # Shuffle the initial configuration

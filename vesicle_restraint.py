@@ -220,6 +220,7 @@ class COMDistanceRestraint(IMP.pmi.restraints.RestraintBase):
         @ param root_hier
         @ param protein1
         @ param protein2
+        @ param ves_membrane_inside
         @ param distance
         @ param strength
         @ param label
@@ -248,24 +249,11 @@ class COMDistanceRestraint(IMP.pmi.restraints.RestraintBase):
             print("COMDistanceRestraint: WARNING> cannot select protein %s)" % protein0)
             exit()
 
-        """
-        s1 = IMP.atom.Selection(root_hier, molecule=protein1)
-        p1 = s1.get_selected_particles()
-        if len(p1) == 0:
-            print("COMDistanceRestraint: WARNING> cannot select protein %s)" % protein1)
-            exit()
-        # Get COMs
-
-        print (p0)
-        print (p1)
-        print ("*****************see above******************")
-        """
-        # reassign the particles
+        # reassign the particles for CoM calc
         obj = ves_membrane_inside[0]
         s1 = IMP.atom.Selection(root_hier, molecule=protein1,
                                 residue_indexes=range(obj[0], obj[1] + 1, 1))
         p1 = s1.get_selected_particles()
-
         print (p1)
         print ("*****************see above******************")
         if len(p1) == 0:
