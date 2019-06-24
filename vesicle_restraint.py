@@ -5,6 +5,7 @@ import IMP.pmi.restraints.basic
 import IMP.algebra
 import IMP.em
 import IMP.isd
+import IMP.atom
 
 
 class VesicleMembraneRestraint(IMP.pmi.restraints.RestraintBase):

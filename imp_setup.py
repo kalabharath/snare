@@ -298,8 +298,8 @@ print "Writing initial system state"
 # ----------------------------------------------------
 # This object defines all components to be sampled as well as the sampling protocol
 
-# IMP.pmi.tools.shuffle_configuration(h1_root)
-# dof.optimize_flexible_beads(200)
+IMP.pmi.tools.shuffle_configuration(h1_root)
+dof.optimize_flexible_beads(200)
 
 mc0 = IMP.pmi.macros.ReplicaExchange0(m,
                                       root_hier=hier_all,
