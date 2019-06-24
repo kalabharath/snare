@@ -291,7 +291,7 @@ outputobjects.append(vs_dist)
 # ---------------------------------
 
 IMP.pmi.tools.shuffle_configuration(h1_root)
-dof.optimize_flexible_beads(200)
+dof.optimize_flexible_beads(500)
 
 # ---------------------------------
 # Visualize initial configuration
