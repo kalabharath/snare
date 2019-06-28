@@ -209,7 +209,7 @@ class COMDistanceRestraint(IMP.pmi.restraints.RestraintBase):
                  root_hier,
                  protein0,
                  protein1,
-                 ves_membrane_inside,
+                 residue_range,
                  distance=60.0,
                  strength=1.0,
                  label=None,
@@ -240,42 +240,85 @@ class COMDistanceRestraint(IMP.pmi.restraints.RestraintBase):
         self.distance = distance
 
         # Setup restraint
-        self.rs = self._create_restraint_set()
 
-        s0 = IMP.atom.Selection(root_hier, molecule=protein0)
-        p0 = s0.get_selected_particles()
+        if len(residue_range) ==1:
 
-        if len(p0) == 0:
-            print("COMDistanceRestraint: WARNING> cannot select protein %s)" % protein0)
-            exit()
+            self.rs = self._create_restraint_set()
+            s0 = IMP.atom.Selection(root_hier, molecule=protein0)
+            p0 = s0.get_selected_particles()
 
-        # reassign the particles for CoM calc
-        obj = ves_membrane_inside[0]
-        s1 = IMP.atom.Selection(root_hier, molecule=protein1,
-                                residue_indexes=range(obj[0], obj[1] + 1, 1))
-        p1 = s1.get_selected_particles()
-        print (p1)
-        print ("*****************see above******************")
-        if len(p1) == 0:
-            print("COMDistanceRestraint: WARNING> cannot select protein %s)" % protein1)
-            exit()
+            if len(p0) == 0:
+                print("COMDistanceRestraint: WARNING> cannot select protein %s)" % protein0)
+                exit()
 
-        # include only the residues for the terminal end of the molecule for distance calculation
+            # reassign the particles for CoM calc
+            obj = residue_range[0]
+            s1 = IMP.atom.Selection(root_hier, molecule=protein1,
+                                    residue_indexes=range(obj[0], obj[1] + 1, 1))
+            p1 = s1.get_selected_particles()
+            print (p1)
+            print ("*****************see above******************")
+            if len(p1) == 0:
+                print("COMDistanceRestraint: WARNING> cannot select protein %s)" % protein1)
+                exit()
 
-        self.com0 = IMP.atom.CenterOfMass.setup_particle(IMP.Particle(model), p0)
-        self.com1 = IMP.atom.CenterOfMass.setup_particle(IMP.Particle(model), p1)
+            # include only the residues for the terminal end of the molecule for distance calculation
 
-        coor0 = IMP.core.XYZ(self.com0).get_coordinates()
-        coor1 = IMP.core.XYZ(self.com1).get_coordinates()
+            self.com0 = IMP.atom.CenterOfMass.setup_particle(IMP.Particle(model), p0)
+            self.com1 = IMP.atom.CenterOfMass.setup_particle(IMP.Particle(model), p1)
 
-        d = IMP.algebra.get_distance(coor0, coor1)
+            coor0 = IMP.core.XYZ(self.com0).get_coordinates()
+            coor1 = IMP.core.XYZ(self.com1).get_coordinates()
 
-        # Distance restraint
-        hub = IMP.core.HarmonicUpperBound(self.distance, self.strength)
+            d = IMP.algebra.get_distance(coor0, coor1)
 
-        df = IMP.core.DistancePairScore(hub)
-        dr = IMP.core.PairRestraint(model, df, (self.com0, self.com1))
-        self.rs.add_restraint(dr)
+            # Distance restraint
+            hub = IMP.core.HarmonicUpperBound(self.distance, self.strength)
+
+            df = IMP.core.DistancePairScore(hub)
+            dr = IMP.core.PairRestraint(model, df, (self.com0, self.com1))
+            self.rs.add_restraint(dr)
+        elif len(residue_range) == 2:
+            self.rs = self._create_restraint_set()
+            obj0 = residue_range[0]
+            s0 = IMP.atom.Selection(root_hier, molecule=protein1,
+                                    residue_indexes=range(obj0[0], obj0[1] + 1, 1))
+            p0 = s0.get_selected_particles()
+
+            if len(p0) == 0:
+                print("COMDistanceRestraint: WARNING> cannot select protein %s)" % protein0)
+                exit()
+
+            # reassign the particles for CoM calc
+            obj1 = residue_range[1]
+            s1 = IMP.atom.Selection(root_hier, molecule=protein1,
+                                    residue_indexes=range(obj1[0], obj1[1] + 1, 1))
+            p1 = s1.get_selected_particles()
+            print (p1)
+            print ("*****************CoM Restraints******************")
+            if len(p1) == 0:
+                print("COMDistanceRestraint: WARNING> cannot select protein %s)" % protein1)
+                exit()
+
+            # include only the residues for the terminal end of the molecule for distance calculation
+
+            self.com0 = IMP.atom.CenterOfMass.setup_particle(IMP.Particle(model), p0)
+            self.com1 = IMP.atom.CenterOfMass.setup_particle(IMP.Particle(model), p1)
+
+            coor0 = IMP.core.XYZ(self.com0).get_coordinates()
+            coor1 = IMP.core.XYZ(self.com1).get_coordinates()
+
+            d = IMP.algebra.get_distance(coor0, coor1)
+
+            # Distance restraint
+            hub = IMP.core.HarmonicUpperBound(self.distance, self.strength)
+
+            df = IMP.core.DistancePairScore(hub)
+            dr = IMP.core.PairRestraint(model, df, (self.com0, self.com1))
+            self.rs.add_restraint(dr)
+        else:
+
+            print ("Something terribly wrong with your logic")
 
     def get_output(self):
 

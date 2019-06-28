@@ -11,8 +11,6 @@ def write_csv(filename, darray):
             pass
         else:
             wr.writerows([entry])
-
-
     return True
 
 

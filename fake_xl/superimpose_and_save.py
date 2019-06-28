@@ -7,7 +7,7 @@ pdb_files = glob.glob("*_*_*.pdb")
 print (pdb_files)
 
 for pdb in pdb_files:
-    native = pymol.cmd.load("complex.cif", 'obj1')
+    native = pymol.cmd.load('./5w5c.cif', 'obj1')
     pymol.cmd.load(pdb, 'obj2')
     pymol.cmd.align('obj2', 'obj1')
     pymol.cmd.save(pdb, 'obj2', format='pdb')

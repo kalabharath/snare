@@ -67,9 +67,9 @@ m = IMP.Model()
 #
 # ********************************************
 
-colors = ['green', 'turquoise', 'magenta', 'orange']
-components = ['Vamp2', 'Stx1a', 'Snap25', 'Cplx2']
-chains = 'ABCD'
+colors = ['green', 'turquoise', 'magenta', 'orange','red']
+components = ['Vamp2', 'Stx1a', 'Snap25', 'Cplx2', 'Syt7']
+chains = 'ABCDE'
 radius_of_the_vesicle = 400
 
 mols = []
@@ -156,7 +156,7 @@ sf = IMP.core.RestraintsScoringFunction(IMP.pmi.tools.get_restraint_set(m))
 # --------------------------
 
 inside = [(266, 288, 'Stx1a')]
-above = [(1, 265, 'Stx1a'), (1, 94, 'Vamp2'), (1, 206, 'Snap25')]
+above = [(1, 265, 'Stx1a'), (1, 94, 'Vamp2'), (1, 206, 'Snap25'), (1, 333, 'Syt7')]
 
 mr = VesicleMembraneRestraint(h1_root, objects_inside=inside, objects_above=above, thickness=40, radius=100)
 mr.add_to_model()
@@ -275,22 +275,60 @@ IMP.atom.show_with_representations(hier_all)
 # Distance restraint between \
 # SNAREs and the vesicle
 # -------------------------------------
-
+#[1]
 inside_vesicle = [(95, 116, 'Vamp2')]
 outside_vesicle = [(1, 94, 'Vamp2')]
 
 vs_dist = COMDistanceRestraint(root_hier=hier_all, protein0='vesicle', protein1='Vamp2',
-                               ves_membrane_inside=inside_vesicle, distance=radius_of_the_vesicle, strength=1.0,
+                               residue_range=inside_vesicle, distance=radius_of_the_vesicle, strength=1.0,
                                label=None,
                                weight=1.0)
 vs_dist.add_to_model()
 outputobjects.append(vs_dist)
 
+#[2]
+inside_vesicle = [(1, 9, 'Syt7')]
+outside_vesicle = [(10, 330, 'Syt7')]
+
+vs_dist2 = COMDistanceRestraint(root_hier=hier_all, protein0='vesicle', protein1='Syt7',
+                                residue_range=inside_vesicle, distance=radius_of_the_vesicle, strength=1.0,
+                                label=None,
+                                weight=1.0)
+vs_dist2.add_to_model()
+outputobjects.append(vs_dist2)
+
+
+# -------------------------------------
+# CoM restraint between
+# Syt7 and the Stx1a
+# -------------------------------------
+# [3]
+
+com_pairs = [(204,208, 'Stx1a'),(312, 316, 'Syt7')]
+com_dist1 = COMDistanceRestraint(root_hier=hier_all, protein0='Stx1a', protein1='Syt7',
+                                  residue_range=com_pairs, distance=15.0, strength=10.0,
+                                  label=None,
+                                  weight=10.0)
+com_dist1.add_to_model()
+outputobjects.append(com_dist1)
+
 # ---------------------------------
-# Shuffle the initial configuration
+# Visualize initial configuration
 # ---------------------------------
 
-IMP.pmi.tools.shuffle_configuration(h1_root)
+output = IMP.pmi.output.Output()
+output.init_rmf("ini_all.rmf3", [hier_all])
+output.write_rmf("ini_all.rmf3")
+output.close_rmf("ini_all.rmf3")
+
+print "Writing initial system state"
+
+# ---------------------------------
+# Shuffle the initial configuration
+# Shuffling makes it only worse
+# ---------------------------------
+
+#IMP.pmi.tools.shuffle_configuration(h1_root)
 dof.optimize_flexible_beads(500)
 
 # ---------------------------------
